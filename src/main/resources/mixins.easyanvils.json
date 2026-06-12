@@ -1,0 +1,20 @@
+{
+  "required": true,
+  "minVersion": "0.7.11",
+  "package": "com.xy.easyanvils.mixin",
+  "plugin": "com.xy.easyanvils.mixin.EasyAnvilsMixinPlugin",
+  "compatibilityLevel": "JAVA_8",
+  "refmap": "mixins.easyanvils.refmap.json",
+  "mixins": [
+    "MixinBlockAnvil",
+    "MixinContainerRepair",
+    "MixinContainerRepairResultSlot",
+    "accessor.SlotAccessor"
+  ],
+  "client": [
+    "client.MixinGuiRepair"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
