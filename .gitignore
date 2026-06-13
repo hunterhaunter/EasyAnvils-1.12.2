@@ -22,5 +22,12 @@ Thumbs.db
 EasyAnvils-v8.0.2-1.20.1-Forge.jar
 /libs/
 
-# internal port notes
+# internal port notes — never publish
 REF_createResult.txt
+_docs/
+_logs/
+_original/
+_INTAKE/
+PORT.md
+*.log
+.rfg-classpath.txt
