@@ -43,7 +43,9 @@ public class AnvilCostHandler {
 
         // === Prior-work penalty (config-driven) ===
         int baseRepairCost = left.getRepairCost() + (right.isEmpty() ? 0 : right.getRepairCost());
-        baseRepairCost = EasyAnvilsConfig.priorWorkPenalty.apply(baseRepairCost);
+        baseRepairCost = EasyAnvilsConfig.enablePriorWorkPenalty
+                ? EasyAnvilsConfig.priorWorkPenalty.apply(baseRepairCost)
+                : 0;
 
         int materialCost = 0;
         boolean isBook = false;
@@ -186,12 +188,12 @@ public class AnvilCostHandler {
         boolean hasRenamedItem = false;
         if (StringUtils.isBlank(itemName)) {
             if (left.hasDisplayName()) {
-                renameOperationCost = EasyAnvilsConfig.freeRenames.test(left) ? 0 : 1;
+                renameOperationCost = EasyAnvilsConfig.isFreeRename(left) ? 0 : 1;
                 hasRenamedItem = true;
                 output.clearCustomName();
             }
         } else if (!itemName.equals(left.getDisplayName())) {
-            renameOperationCost = EasyAnvilsConfig.freeRenames.test(left) ? 0 : 1;
+            renameOperationCost = EasyAnvilsConfig.isFreeRename(left) ? 0 : 1;
             hasRenamedItem = true;
             output.setStackDisplayName(itemName);
         }
@@ -216,9 +218,8 @@ public class AnvilCostHandler {
         }
 
         // === Too-expensive limit ===
-        int maxCost = EasyAnvilsConfig.tooExpensiveLimit;
-        boolean unlimited = (maxCost == -1);
-        if (unlimited) maxCost = 40;
+        boolean unlimited = !EasyAnvilsConfig.enableTooExpensiveLimit;
+        int maxCost = unlimited ? 40 : EasyAnvilsConfig.tooExpensiveLimit;
         if (cost >= maxCost) {
             if (enchantOperationCost == 0
                     && EasyAnvilsConfig.renameAndRepairCosts == EasyAnvilsConfig.RenameAndRepairCost.LIMITED) {

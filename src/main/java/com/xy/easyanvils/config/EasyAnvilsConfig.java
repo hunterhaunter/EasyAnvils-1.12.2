@@ -14,13 +14,16 @@ import java.io.File;
 public class EasyAnvilsConfig {
 
     // ---- prior_work_penalty ----
+    public static boolean enablePriorWorkPenalty = true;
     public static PriorWorkPenalty priorWorkPenalty = PriorWorkPenalty.FIXED;
     public static int priorWorkPenaltyConstant = 4;
     public static RenameAndRepairCost renameAndRepairCosts = RenameAndRepairCost.FIXED;
     public static boolean penaltyFreeRenamesAndRepairs = true;
 
     // ---- costs ----
-    public static int tooExpensiveLimit = -1;
+    public static boolean enableTooExpensiveLimit = false;
+    public static int tooExpensiveLimit = 40;
+    public static boolean enableFreeRenames = true;
     public static FreeRenames freeRenames = FreeRenames.ALL_ITEMS;
     public static int commonEnchantmentMultiplier = 1;
     public static int uncommonEnchantmentMultiplier = 2;
@@ -33,7 +36,8 @@ public class EasyAnvilsConfig {
     // ---- miscellaneous ----
     public static boolean anvilRepairing = true;
     public static boolean editNameTagsNoAnvil = true;
-    public static double anvilBreakChance = 0.05;
+    public static boolean anvilsCanBreak = true;
+    public static double anvilBreakChance = 0.12;
     public static boolean riskFreeAnvilRenaming = true;
     public static boolean renamingSupportsFormatting = true;
     public static boolean allowIncompatibleEnchantments = false;
@@ -64,6 +68,9 @@ public class EasyAnvilsConfig {
             return;
         }
 
+        enablePriorWorkPenalty = config.getBoolean(
+                "enablePriorWorkPenalty", CAT_PENALTY, true,
+                "Master toggle for the prior work penalty. When disabled, working an item multiple times never raises future costs (equivalent to priorWorkPenalty=DISABLED).");
         priorWorkPenalty = PriorWorkPenalty.valueOf(config.getString(
                 "priorWorkPenalty", CAT_PENALTY, PriorWorkPenalty.FIXED.name(),
                 "Controls how working an item in the anvil multiple times affects the cost of future operations.\n"
@@ -84,14 +91,20 @@ public class EasyAnvilsConfig {
                 "penaltyFreeRenamesAndRepairs", CAT_PENALTY, true,
                 "Prevents the prior work penalty from increasing when the item has only been renamed or repaired.");
 
+        enableTooExpensiveLimit = config.getBoolean(
+                "enableTooExpensiveLimit", CAT_COSTS, false,
+                "Master toggle for the 'Too Expensive!' cost cap. When disabled, anvil operations are never blocked for costing too much (no upper level limit).\n"
+                        + "Leave disabled if another mod (e.g. EnchantmentControl) manages this, since the prior work penalty can otherwise make costs interact oddly.");
         tooExpensiveLimit = config.getInt(
-                "tooExpensiveLimit", CAT_COSTS, -1, -1, Integer.MAX_VALUE,
-                "Max cost of enchantment level allowed to be spent in an anvil. Every operation exceeding the limit will show as 'Too Expensive!' and will be disallowed.\n"
-                        + "If set to '-1' the limit is disabled.\n"
+                "tooExpensiveLimit", CAT_COSTS, 40, 0, Integer.MAX_VALUE,
+                "Max cost in enchantment levels allowed in an anvil when 'enableTooExpensiveLimit' is true. Every operation exceeding the limit shows as 'Too Expensive!' and is disallowed.\n"
                         + "Set to '40' enchantment levels in vanilla.");
+        enableFreeRenames = config.getBoolean(
+                "enableFreeRenames", CAT_COSTS, true,
+                "Master toggle for free renaming. When disabled, renaming items in an anvil always costs a level (vanilla behaviour).");
         freeRenames = FreeRenames.valueOf(config.getString(
                 "freeRenames", CAT_COSTS, FreeRenames.ALL_ITEMS.name(),
-                "Renaming any item in an anvil no longer costs any enchantment levels at all. Can be restricted to only name tags.",
+                "Which items rename for free when 'enableFreeRenames' is true. ALL_ITEMS: every item. NAME_TAGS_ONLY: only name tags.",
                 names(FreeRenames.values())));
         commonEnchantmentMultiplier = config.getInt(
                 "commonEnchantmentMultiplier", CAT_COSTS, 1, 0, Integer.MAX_VALUE,
@@ -121,8 +134,11 @@ public class EasyAnvilsConfig {
         editNameTagsNoAnvil = config.getBoolean(
                 "editNameTagsNoAnvil", CAT_MISC, true,
                 "Edit name tags without cost nor anvil, simply by sneak + right-clicking.");
-        anvilBreakChance = config.get(CAT_MISC, "anvilBreakChance", 0.05,
-                "Chance the anvil will break into chipped or damaged variant, or break completely after using. Value is set to 0.12 in vanilla.",
+        anvilsCanBreak = config.getBoolean(
+                "anvilsCanBreak", CAT_MISC, true,
+                "Master toggle for anvil damage. When disabled, anvils never chip, damage, or break from use (indestructible).");
+        anvilBreakChance = config.get(CAT_MISC, "anvilBreakChance", 0.12,
+                "Chance per use the anvil degrades one stage (intact -> chipped -> damaged -> destroyed) when 'anvilsCanBreak' is true. Vanilla is 0.12.",
                 0.0, 1.0).getDouble();
         riskFreeAnvilRenaming = config.getBoolean(
                 "riskFreeAnvilRenaming", CAT_MISC, true,
@@ -154,6 +170,11 @@ public class EasyAnvilsConfig {
     }
 
     // ---- behaviour helpers (ported from the original enums) ----
+
+    /** True when the given item renames for free, honouring both the master toggle and the mode. */
+    public static boolean isFreeRename(ItemStack stack) {
+        return enableFreeRenames && freeRenames.test(stack);
+    }
 
     /** Mirrors ModAnvilMenu.repairCostToRepairs - number of prior anvil operations encoded in a repair cost. */
     public static int repairCostToRepairs(int repairCost) {

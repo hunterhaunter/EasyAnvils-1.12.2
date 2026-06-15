@@ -35,7 +35,8 @@ public abstract class MixinGuiRepair {
 
     @ModifyConstant(method = "drawGuiContainerForegroundLayer", constant = @Constant(intValue = 40))
     private int easyanvils$tooExpensiveLimit(int vanilla) {
-        int limit = EasyAnvilsConfig.tooExpensiveLimit;
-        return limit == -1 ? Integer.MAX_VALUE : limit;
+        return EasyAnvilsConfig.enableTooExpensiveLimit
+                ? EasyAnvilsConfig.tooExpensiveLimit
+                : Integer.MAX_VALUE;
     }
 }

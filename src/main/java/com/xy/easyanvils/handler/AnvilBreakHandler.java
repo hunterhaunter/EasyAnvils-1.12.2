@@ -9,6 +9,10 @@ public class AnvilBreakHandler {
 
     @SubscribeEvent
     public void onAnvilRepair(AnvilRepairEvent event) {
+        if (!EasyAnvilsConfig.anvilsCanBreak) {
+            event.setBreakChance(0.0F);
+            return;
+        }
         ItemStack right = event.getIngredientInput();
         if (EasyAnvilsConfig.riskFreeAnvilRenaming && right.isEmpty()) {
             event.setBreakChance(0.0F);

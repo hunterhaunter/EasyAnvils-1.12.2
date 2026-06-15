@@ -21,6 +21,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Makes the anvil's two input slots read/write a {@link TileEntityAnvil} directly, so items "stay
@@ -92,6 +93,21 @@ public abstract class MixinContainerRepair extends Container {
         this.materialCost = event.getMaterialCost();
         this.detectAndSendChanges();
         ci.cancel();
+    }
+
+    // Close the shift-click XP loophole. Vanilla ContainerRepair.transferStackInSlot moves the
+    // result (index 2) into the inventory and calls onTake WITHOUT consulting the slot's
+    // canTakeStack, so onTake's addExperienceLevel(-maximumCost) just floors the player at level 0 -
+    // i.e. a free enchant/repair you couldn't otherwise afford. Normal clicks are already gated by
+    // canTakeStack; this gates the shift-click path the same way (creative or enough levels).
+    // A 0-cost free rename stays takeable since experienceLevel < 0 is never true.
+    @Inject(method = "transferStackInSlot", at = @At("HEAD"), cancellable = true)
+    private void easyanvils$gateShiftClickXp(EntityPlayer player, int index, CallbackInfoReturnable<ItemStack> cir) {
+        if (index == 2
+                && !player.capabilities.isCreativeMode
+                && player.experienceLevel < this.maximumCost) {
+            cir.setReturnValue(ItemStack.EMPTY);
+        }
     }
 
     @Unique

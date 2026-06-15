@@ -32,6 +32,11 @@ public class EasyAnvilsMixinPlugin implements IMixinConfigPlugin {
     // Detected lazily at first target-class load, by which point all jars are present.
     private static Boolean conflictingAnvilMod;
 
+    /** True when a conflicting anvil mod disabled our persistent-inventory + shift-click XP mixins. */
+    public static boolean isAnvilModConflict() {
+        return isConflictingAnvilModLoaded();
+    }
+
     private static boolean isConflictingAnvilModLoaded() {
         if (conflictingAnvilMod == null) {
             conflictingAnvilMod = isClassPresent("com.lumberjacksparrow.anvilpatchevil.mixin.ContainerRepairMixin");
